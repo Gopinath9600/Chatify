@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 import env from "dotenv";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 
 const app = express();
 
@@ -11,19 +11,16 @@ env.config();
 app.use(cors());
 app.use(bodyParser.json());
 
-//configure openai
-const configuration = new Configuration({
-  organization: "org-EC7Z51MJ9jQ7YDf04drq9rKr",
-  apiKey: process.env.API_KEY, // VISIT .env AND MAKE CHANGES
+const openai = new OpenAI({
+  apiKey: process.env.API_KEY,
 });
-const openai = new OpenAIApi(configuration); //our account is connected to our server
 
-//listening
-app.listen("3080", () => console.log("listening to port 3080"));
+// listeninng
+app.listen("3080", () => console.log("listening on port 3080"));
 
-//dummy route
+// dummy route to test
 app.get("/", (req, res) => {
-  res.send("Hello Gopi");
+  res.send("Hello World!");
 });
 
 //post route for making requests
@@ -31,16 +28,16 @@ app.post("/", async (req, res) => {
   const { message } = req.body;
 
   try {
-    const response = await openai.createCompletion({
-      model: "text-devinci-003",
-      prompt: `${message}`,
-      max_tokens: 100,
-      temperature: 0.5,
+    const response = await openai.chat.completions.create({
+      messages: [{ role: "user", content: `${message}` }],
+      model: "gpt-3.5-turbo",
+      max_tokens: 200,
     });
+    console.log(response.choices[0].message.content);
 
-    res.json({ message: response.data.choices[0].value });
-  } catch (error) {
-    console.log(error);
-    res.send(error).status(400);
+    res.json({ message: response.choices[0].message.content });
+  } catch (e) {
+    console.log(e);
+    res.send(e).status(400);
   }
 });
